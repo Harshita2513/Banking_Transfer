@@ -1,7 +1,4 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class Bank_Transactions {
     static private String URL = "jdbc:mysql://localhost:3306/customer";
@@ -44,6 +41,31 @@ try(Connection conn = DriverManager.getConnection(URL, user, password)) {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    private static void transferMoney(Connection conn, int fromId, int toId, double amount) {
+/*
+*  Logic (important)
+Start transaction (setAutoCommit(false))
+Check balance of sender
+Deduct amount from sender
+Add amount to receiver
+Commit (or rollback if error)*/
+        String checksql = "Select balance from accounts where id = ?";
+        try(PreparedStatement pstm = conn.prepareStatement(checksql)) {
+            conn.setAutoCommit(false);
+            pstm.setInt(1, fromId);
+            ResultSet rs = pstm.executeQuery();
+            if(rs.next()) {
+                double balance = rs.getDouble("balance");
+                if(balance < amount) {
+                    throw new Exception("Insufficient balance");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
           /*
         *
