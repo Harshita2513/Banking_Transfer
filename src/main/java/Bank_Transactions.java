@@ -50,23 +50,57 @@ Check balance of sender
 Deduct amount from sender
 Add amount to receiver
 Commit (or rollback if error)*/
-        String checksql = "Select balance from accounts where id = ?";
-        try(PreparedStatement pstm = conn.prepareStatement(checksql)) {
+        try {
             conn.setAutoCommit(false);
-            pstm.setInt(1, fromId);
-            ResultSet rs = pstm.executeQuery();
+            // Check balance of sender
+            String checksql = "Select balance from accounts where id = ?";
+            PreparedStatement checkStm = conn.prepareStatement(checksql)
+            checkStm.setInt(1, fromId);
+            ResultSet rs = checkStm.executeQuery();
             if(rs.next()) {
                 double balance = rs.getDouble("balance");
-                if(balance < amount) {
+                if (balance < amount) {
                     throw new Exception("Insufficient balance");
                 }
+                // Deduct amount from sender
+                String debt = "Update accounts set balance = balance - ? where id = ?";
+                PreparedStatement debtStm = conn.prepareStatement(debt);
+                debtStm.setDouble(1, amount);
+                debtStm.setInt(2, fromId);
+                debtStm.executeQuery();
+
+                // Add amount to receiver
+                String credt = "Update accounts set balance = balance + ? where id = ?";
+                PreparedStatement crdStm = conn.prepareStatement(credt);
+                crdStm.setDouble(1, amount);
+                crdStm.setInt(2, toId);
+                crdStm.executeQuery();
+
+//            Commit (or rollback if error)
+                conn.commit();
+                System.out.println("Transaction successful");
+            }
+            else {
+                throw new Exception("User not found");
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
-    }
+        catch (Exception e) {
+            try {
+                conn.rollback();
+                System.out.println("Transaction Failed : "+e.getMessage());
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
+        }
+        finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        }
           /*
         *
 Tasks:
