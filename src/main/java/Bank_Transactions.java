@@ -54,7 +54,7 @@ Commit (or rollback if error)*/
             conn.setAutoCommit(false);
             // Check balance of sender
             String checksql = "Select balance from accounts where id = ?";
-            PreparedStatement checkStm = conn.prepareStatement(checksql)
+            PreparedStatement checkStm = conn.prepareStatement(checksql);
             checkStm.setInt(1, fromId);
             ResultSet rs = checkStm.executeQuery();
             if(rs.next()) {
