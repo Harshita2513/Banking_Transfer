@@ -1,18 +1,19 @@
 import java.sql.*;
 
 public class Bank_Transactions {
-    static private String URL = "jdbc:mysql://localhost:3306/customer";
-    static private String user = "root";
-    static private String password = "9999";
+    final static private String URL = "jdbc:mysql://localhost:3306/customer";
+    final static private String user = "root";
+    final static private String password = "20232026";
     public static void main(String[] args) {
 try(Connection conn = DriverManager.getConnection(URL, user, password)) {
     System.out.println("Database connected");
-    conn.setAutoCommit(false);
+//    conn.setAutoCommit(false);
     createTable(conn);
-    insertCustomer(conn, "Nisha", 38000.0);
-    insertCustomer(conn, "Suga", 900000000.0);
-
+   int fromId = insertCustomer(conn, "Nisha", 38000.0);
+   int toId =  insertCustomer(conn, "Suga", 900000000.0);
     conn.commit();
+    transferMoney(conn,fromId, toId, 15000);
+//    conn.commit();
 } catch (SQLException e) {
     e.printStackTrace();
 }
@@ -28,19 +29,31 @@ try(Connection conn = DriverManager.getConnection(URL, user, password)) {
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } ;
+        }
 
     }
-    private static void insertCustomer(Connection conn, String name, double balance) {
+    private static int insertCustomer(Connection conn, String name, double balance) {
         String sql = "Insert into accounts(name, balance) values(?, ?)";
-        try (PreparedStatement pstm = conn.prepareStatement(sql)){
+        try (PreparedStatement pstm = conn.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS)) {
             pstm.setString(1, name);
             pstm.setDouble(2, balance);
             int rows = pstm.executeUpdate();
-            System.out.println("Inserted : "+rows);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Inserted : " + rows);
+            try (ResultSet rs = pstm.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    System.out.println("Order Id : " + id);
+                    return id;
+                } else {
+                    throw new SQLException("No customer id found");
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException();
+            }
         }
+          catch (SQLException e){
+                throw new RuntimeException(e);
+            }
     }
     private static void transferMoney(Connection conn, int fromId, int toId, double amount) {
 /*
