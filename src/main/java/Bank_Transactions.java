@@ -3,17 +3,16 @@ import java.sql.*;
 public class Bank_Transactions {
     final static private String URL = "jdbc:mysql://localhost:3306/customer";
     final static private String user = "root";
-    final static private String password = "20232026";
+    final static private String password = "9999";
     public static void main(String[] args) {
 try(Connection conn = DriverManager.getConnection(URL, user, password)) {
     System.out.println("Database connected");
-//    conn.setAutoCommit(false);
     createTable(conn);
-   int fromId = insertCustomer(conn, "Nisha", 38000.0);
-   int toId =  insertCustomer(conn, "Suga", 900000000.0);
-    conn.commit();
-    transferMoney(conn,fromId, toId, 15000);
-//    conn.commit();
+//   int fromId = insertCustomer(conn, "Nisha", 38000.0);
+//   int toId =  insertCustomer(conn, "Suga", 900000000.0);
+    int fromId = insertCustomer(conn, "JK", 38000.00);
+    int toId = insertCustomer(conn, "RM", 50000.0);
+    transferMoney(conn,fromId, toId, 40000);
 } catch (SQLException e) {
     e.printStackTrace();
 }
@@ -80,14 +79,14 @@ Commit (or rollback if error)*/
                 PreparedStatement debtStm = conn.prepareStatement(debt);
                 debtStm.setDouble(1, amount);
                 debtStm.setInt(2, fromId);
-                debtStm.executeQuery();
+                debtStm.executeUpdate();
 
                 // Add amount to receiver
                 String credt = "Update accounts set balance = balance + ? where id = ?";
                 PreparedStatement crdStm = conn.prepareStatement(credt);
                 crdStm.setDouble(1, amount);
                 crdStm.setInt(2, toId);
-                crdStm.executeQuery();
+                crdStm.executeUpdate();
 
 //            Commit (or rollback if error)
                 conn.commit();
@@ -114,17 +113,4 @@ Commit (or rollback if error)*/
             }
         }
         }
-          /*
-        *
-Tasks:
-✅ Create accounts table (id, name, balance)
-✅ Implement transferMoney(fromId, toId, amount) method
-✅ Use PreparedStatement for all queries
-✅ Transaction management:
-   - Deduct from sender
-   - Add to receiver
-   - commit() if both succeed
-   - rollback() if any fails
-✅ Test with insufficient balance scenario
-        *  */
     }
